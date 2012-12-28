@@ -60,10 +60,10 @@ unless ((opt_extension and opt_input and opt_comment) || (opt_filename and opt_c
   puts parser
   abort
 end
- 
+
 def save(results, output_path)
   results.each do |k,v|
-    puts "  Saving API #{k} to #{output_path}/#{k}.json" 
+    puts "  Saving API #{k} to #{output_path}/#{k}.json"
     File.new("#{output_path}/#{k}.json","w").puts v.to_json
   end
 end
@@ -83,29 +83,32 @@ def run(input, extension, comment, output, filename)
 
   if filename.nil?
     code = reader.analyze_all_files(input,extension,comment)
-  else 
-    code = reader.analyze_file(filename, comment)
+  else
+    # code = reader.analyze_file(filename, comment)
+    code = reader.analyze_file_with_dsl(filename, comment)
   end
-  
+
+  results = []
+
   begin
     results = reader.process_code(code) unless code.nil? || code.empty?
   rescue SwaggerReaderException => e
     puts "There is a problem with your swagger annotation. See below...\n\n"
     puts e.inspect
-  end  
+  end
 
   if filename.nil?
     puts "Swagger API in #{input}/**/*.#{extension}: #{results.size} API\n"
   else
     puts "Swagger API in #{filename}: #{results.size} API\n"
   end
-  
+
   if output.nil?
     print(results)
   else
     save(results,output)
   end
-  
+
   puts "Done!"
 
 end
