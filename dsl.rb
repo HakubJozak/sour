@@ -1,11 +1,11 @@
-DOC_CODE = Proc.new do
+EXAMPLE_DOC = Proc.new do
 
 namespace 'CMS API'
 basePath     = 'vodafone-admin.3scale.net'
 swagrVersion = "0.1a"
 apiVersion   = "1.0"
 
-resource("/api/invoices.xml", 'List[invoice]') {
+api("/api/invoices.xml", 'List[invoice]') {
   # or POST, PUT, UPDATE, DELETE or operation('WHATEVER')
   GET {
     param 'title', { description: 'Title of the page', dataType: 'string', required: true, paramType: "path" }
@@ -21,25 +21,107 @@ resource("/api/invoices.xml", 'List[invoice]') {
 
 # You can define custom parameters or batches of definitions
 # to DRY
-mixin('provider_key') {
-  param 'provider_key',
-    description: 'provider_key',
-    dataType: 'string',
-    required: true,
-    paramType: "path"
-}
+module MyPagination
+  def is_paginated
+    param('page', { dataType: 'int', default: 1 })
+    param('per_page', { dataType: 'int', default: 20 })
+  end
+end
 
-mixin('pagination') {
-  param('page', { dataType: 'int', default: 1 })
-  param('per_page', { dataType: 'int', default: 20 })
-}
+Operation.mixin(MyPagination)
+end
+
+
+#------------------------------ REAL EXAMPLE ---------------------------------
+
+module Threescale
+  module ApiDocDefaults
+    module Operation
+      def is_paginated
+        param('page', { dataType: 'int', default: 1 })
+        param('per_page', { dataType: 'int', default: 20 })
+      end
+
+      def system_name
+        param 'system_name', 'Unique, human readable identifier'
+      end
+
+      def requires_provider_key
+        param 'provider_key',
+        description: 'provider_key',
+        dataType: 'string',
+        required: true,
+        paramType: "path"
+      end
+    end
+  end
+end
+
+
+TEMPLATE_DOC = Proc.new do
+
+  Operation.mixin Threescale::ApiDocDefaults::Operation
+
+  api("/api/templates.xml", 'List[template]') {
+
+    GET('List all templates') {
+      is_paginated
+      requires_provider_key
+    }
+
+    # TODO: POST('Create a template') {
+    #   requires_provider_key
+    # }
+  }
+
+  api("/api/templates/{id}.xml", 'template') {
+    PUT('Update template') {
+      requires_provider_key
+      id 'ID of the template'
+      system_name
+      param 'title', 'Title of the template'
+      param 'path', 'URI of the page'
+      param 'section_id', 'ID of a section', default: 'root section id', type: 'int'
+      param 'layout_name', 'system name of a layout', type: 'string'
+      param 'layout_id', 'ID of a layout - overrides layout_name', type: 'int'
+      param 'liquid_enabled', 'liquid processing of the template content on/off', type: 'boolean'
+      param 'handler', "text will be processed by the handler before rendering",
+        allowableValues:{
+         valueType: "LIST",
+         values: [ "", "markdown","textile" ]
+        }
+    }
+  }
 
 end
+
 
 #------------------------------ IMPLEMENTATION ---------------------------------
 
 
+module MixinBuilder
+  # mixin('pagination') {
+  #   param('page', { dataType: 'int', default: 1 })
+  #   param('per_page', { dataType: 'int', default: 20 })
+  # }
+  #
+  def mixin(*args, &block)
+    if block_given?
+      instance_eval """
+        def self.#{name}
+          block.call
+        end
+      """
+    else
+      include args.first
+    end
+  end
+end
+
+
 class Resource < Hash
+  extend MixinBuilder
+
   attr_accessor :path
 
   def initialize(path, type, options = {}, &definition)
@@ -49,13 +131,15 @@ class Resource < Hash
     self.instance_eval(&definition)
   end
 
-  def operation(method, &definition)
-    @operations << Operation.new(method, &definition)
+  def operation(method, description = nil, &definition)
+    @operations << Operation.new(method, description, &definition)
   end
 
-  def GET(&block)
-    operation('GET', &block)
-  end
+
+  def GET( desc = nil, &block) ; operation('GET', desc, &block) ; end
+  def POST( desc = nil, &block) ; operation('POST', desc, &block) ; end
+  def PUT( desc = nil, &block) ; operation('PUT', desc, &block) ; end
+  def DELETE( desc = nil, &block) ; operation('DELETE', desc, &block) ; end
 
 end
 
@@ -65,14 +149,17 @@ end
 #           "httpMethod": "PUT",
 #           "summary": "Updates a template"
 class Operation < Hash
-  def initialize(method, &definition)
+  extend MixinBuilder
+
+  def initialize(method, description, &definition)
     self[:httpMethod] = method
+    self[:description] = description
     @params = self[:parameters] = []
     self.instance_eval(&definition)
   end
 
   def description(text)
-    self[:description] = desc
+    self[:description] = text
   end
 
   def summary(text)
@@ -106,18 +193,19 @@ end
 
 
 class Builder < Hash
+  extend MixinBuilder
 
   def initialize(&documentation)
-    @resources = self[:resources] = []
+    @resources = self[:apis] = []
     self.instance_eval &documentation
+  end
+
+  def api(path, type, options = {}, &definition)
+    @resources << Resource.new(path, type, options, &definition)
   end
 
   def namespace(name)
     self[:namespace] = name
-  end
-
-  def resource(path, type, options = {}, &definition)
-    @resources << Resource.new(path, type, options, &definition)
   end
 
   def basePath(path)
@@ -132,25 +220,12 @@ class Builder < Hash
     self[:apiVersion] = version
   end
 
-  # mixin('pagination') {
-  #   param('page', { dataType: 'int', default: 1 })
-  #   param('per_page', { dataType: 'int', default: 20 })
-  # }
-  #
-  def mixin(name, &block)
-    instance_eval """
-     def self.#{name}
-       block.call
-     end
-    """
-  end
-
 end
 
 require 'json'
 
-builder = Builder.new(&DOC_CODE)
-puts builder.to_json
+#builder = Builder.new(&EXAMPLE_DOC)
+puts Builder.new(&TEMPLATE_DOC).to_json
 
 # {
 #   "apiVersion": "1.0",
@@ -247,7 +322,6 @@ puts builder.to_json
 #               "required": false
 #             }
 #           ],
-p
 #         }
 #       ],
 #       "path": "/templates/{id}.xml",
