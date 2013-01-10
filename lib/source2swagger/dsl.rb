@@ -137,9 +137,8 @@ module Source2Swagger
 
     alias :swagrVersion :swaggerVersion
 
-  def apiVersion(version)
-    self[:apiVersion] = version
+    def apiVersion(version)
+      self[:apiVersion] = version
+    end
   end
-
-end
 end

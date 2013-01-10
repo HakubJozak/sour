@@ -6,6 +6,7 @@ require 'json'
 
 begin
   require 'source2swagger/dsl'
+  require 'source2swagger/cli'
 rescue LoadError
   lib = File.expand_path(File.dirname(__FILE__) + '/../lib')
 
@@ -19,54 +20,6 @@ end
 
 
 
-module Source2Swagger
-  class CLI < Thor
-
-    include Thor::Actions
-
-    default_task :docs
-
-    desc "docs", "generate documentation from the processing a file/directory supplied"
-    method_option :comment, :default => '##~', :desc => 'comment prefix', :aliases => '-c'
-    def docs(glob)
-      files = Dir[glob]
-
-      buffer = []
-      comment = options[:comment]
-
-      if files.size > 0
-        #  builder = Source2Swagger::Builder.new(&EXAMPLE_DOC)
-        #  puts Source2Swagger::Builder.new(&TEMPLATE_DOC).to_json
-        files.each do |file|
-          if File.exist?(file)
-            say "Reading #{file}"
-
-            File.new(file).lines.each do |line|
-              stripped = line.strip
-
-              if stripped.start_with?(comment)
-                buffer << stripped[comment.size..-1]
-              end
-            end
-          else
-            say "#{file} does not exist"
-          end
-        end
-      else
-        say "No such file or directory: #{glob}"
-        return
-      end
-
-      builder = Source2Swagger::Builder.new
-      builder.parse_documentation(buffer.join("\n"))
-      puts builder.to_json
-
-      # user_alias = options[:alias]
-      # if options.force?
-      # end
-    end
-  end
-end
 
 
 args_with_task = [ :docs, ARGV ].flatten
