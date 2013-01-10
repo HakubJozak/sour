@@ -1,4 +1,4 @@
-module Source2Swagger
+module Sour
   module MixinBuilder
     # mixin('pagination') {
     #   param('page', { dataType: 'int', default: 1 })
