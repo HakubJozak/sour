@@ -5,8 +5,8 @@ require 'thor'
 require 'json'
 
 begin
-  require 'source2swagger/dsl'
-  require 'source2swagger/cli'
+  require 'sour/dsl'
+  require 'sour/cli'
 rescue LoadError
   lib = File.expand_path(File.dirname(__FILE__) + '/../lib')
 
@@ -20,7 +20,5 @@ end
 
 
 
-
-
 args_with_task = [ :docs, ARGV ].flatten
-Source2Swagger::CLI.start(args_with_task)
+Sour::CLI.start(args_with_task)

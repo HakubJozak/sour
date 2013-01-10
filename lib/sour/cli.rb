@@ -1,4 +1,4 @@
-module Source2Swagger
+module Sour
   class CLI < Thor
 
     include Thor::Actions
@@ -14,8 +14,6 @@ module Source2Swagger
       comment = options[:comment]
 
       if files.size > 0
-        #  builder = Source2Swagger::Builder.new(&EXAMPLE_DOC)
-        #  puts Source2Swagger::Builder.new(&TEMPLATE_DOC).to_json
         files.each do |file|
           if File.exist?(file)
             whisper "Reading #{file}"
@@ -36,13 +34,9 @@ module Source2Swagger
         return
       end
 
-      builder = Source2Swagger::Builder.new
+      builder = Sour::Builder.new
       builder.parse_documentation(buffer.join("\n"))
       puts builder.to_json
-
-      # user_alias = options[:alias]
-      # if options.force?
-      # end
     end
 
     private
