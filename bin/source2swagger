@@ -1,11 +1,11 @@
 #! /usr/bin/env ruby
 
-require 'optparse'
-require "json"
+require 'rubygems'
+require 'thor'
+require 'json'
 
 begin
-  require "swagger_hash"
-  require "swagger_reader"
+  require 'source2swagger/dsl'
 rescue LoadError
   lib = File.expand_path(File.dirname(__FILE__) + '/../lib')
 
@@ -17,101 +17,57 @@ rescue LoadError
   end
 end
 
-opt_input = nil
-opt_output = nil
-opt_comment = nil
-opt_extension = nil
-opt_filename = nil
-
-parser = OptionParser.new do |parser|
-  parser.on('-i','--input PATH', 'Directory of the annotated source code') do |value|
-    opt_input = value
-  end
-
-  parser.on('-e','--ext ("rb"|"c"|"js"|"py")', 'File extension of the source code') do |value|
-    opt_extension = value
-  end
-
-  parser.on('-f','--file FILENAME', 'Overwrites options: -i and -e. Takes a single annotated source code file') do |value|
-    opt_filename = value
-  end
-
-  parser.on('-c','--comment ("##~"|"//~")','Comment tag used to write docs') do |value|
-    opt_comment = value
-  end
-
-  parser.on('-o','--output PATH','Directory where the json output will be saved (optional)') do |value|
-    opt_output = value
-  end
-
-  begin
-    parser.parse!
-  rescue Exception => e
-    puts e.message
-    puts parser
-    abort
-  end
-end
 
 
-puts opt_filename
+module Source2Swagger
+  class CLI < Thor
 
-unless ((opt_extension and opt_input and opt_comment) || (opt_filename and opt_comment))
-  puts parser
-  abort
-end
+    include Thor::Actions
 
-def save(results, output_path)
-  results.each do |k,v|
-    puts "  Saving API #{k} to #{output_path}/#{k}.json"
-    File.new("#{output_path}/#{k}.json","w").puts v.to_json
-  end
-end
+    default_task :docs
 
-def print(results)
-  cont = 1
-  results.each do |k,v|
-    puts "API: #{cont}, #{k}\n"
-    puts v.to_json
-    cont=cont+1
+    desc "docs", "generate documentation from the processing a file/directory supplied"
+    method_option :comment, :default => '##~', :desc => 'comment prefix', :aliases => '-c'
+    def docs(glob)
+      files = Dir[glob]
+
+      buffer = []
+      comment = options[:comment]
+
+      if files.size > 0
+        #  builder = Source2Swagger::Builder.new(&EXAMPLE_DOC)
+        #  puts Source2Swagger::Builder.new(&TEMPLATE_DOC).to_json
+        files.each do |file|
+          if File.exist?(file)
+            say "Reading #{file}"
+
+            File.new(file).lines.each do |line|
+              stripped = line.strip
+
+              if stripped.start_with?(comment)
+                buffer << stripped[comment.size..-1]
+              end
+            end
+          else
+            say "#{file} does not exist"
+          end
+        end
+      else
+        say "No such file or directory: #{glob}"
+        return
+      end
+
+      builder = Source2Swagger::Builder.new
+      builder.parse_documentation(buffer.join("\n"))
+      puts builder.to_json
+
+      # user_alias = options[:alias]
+      # if options.force?
+      # end
+    end
   end
 end
 
-def run(input, extension, comment, output, filename)
-  reader = SwaggerReader.new
-  $_swaggerhash = Hash.new
 
-  if filename.nil?
-    code = reader.analyze_all_files(input,extension,comment)
-  else
-    # code = reader.analyze_file(filename, comment)
-    code = reader.analyze_file_with_dsl(filename, comment)
-  end
-
-  results = []
-
-  begin
-    results = reader.process_code(code) unless code.nil? || code.empty?
-  rescue SwaggerReaderException => e
-    puts "There is a problem with your swagger annotation. See below...\n\n"
-    puts e.inspect
-  end
-
-  if filename.nil?
-    puts "Swagger API in #{input}/**/*.#{extension}: #{results.size} API\n"
-  else
-    puts "Swagger API in #{filename}: #{results.size} API\n"
-  end
-
-  if output.nil?
-    print(results)
-  else
-    save(results,output)
-  end
-
-  puts "Done!"
-
-end
-
-
-run(opt_input, opt_extension, opt_comment, opt_output, opt_filename)
+args_with_task = [ :docs, ARGV ].flatten
+Source2Swagger::CLI.start(args_with_task)

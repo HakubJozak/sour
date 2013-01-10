@@ -2,7 +2,7 @@
 Gem::Specification.new do |gem|
   gem.name          = "source2swagger"
 
-  gem.authors       = ["Josep M. Pujol"]
+  gem.authors       = ["Josep M. Pujol", "Jakub Hozak"]
   gem.email         = 'josep@3scale.net'
 
   gem.description   = %q{Tool for converting comments to Swagger JSON specification}
@@ -14,7 +14,7 @@ Gem::Specification.new do |gem|
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
   gem.test_files    = gem.files.grep(%r{^(test|spec|features)/})
   gem.require_paths = ["lib"]
-  gem.version       = '0.0.2'
+  gem.version       = '0.1.0'
 
-  gem.add_dependency 'json'
+  gem.add_dependency 'thor'
 end
