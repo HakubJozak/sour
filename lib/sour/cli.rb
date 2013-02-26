@@ -5,7 +5,7 @@ module Sour
 
     default_task :docs
 
-    desc "docs", "generate documentation from the processing a file/directory supplied"
+    desc "docs PATH", "generate documentation from the processing a file/directory supplied"
     method_option :comment, :default => '##~', :desc => 'comment prefix', :aliases => '-c'
     def docs(glob)
       files = Dir[glob]
@@ -36,7 +36,7 @@ module Sour
 
       builder = Sour::Builder.new
       builder.parse_documentation(buffer.join("\n"))
-      puts builder.to_json
+      puts JSON.pretty_generate(builder)
     end
 
     private

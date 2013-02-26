@@ -1,14 +1,14 @@
 # -*- encoding: utf-8 -*-
 Gem::Specification.new do |gem|
-  gem.name          = "source2swagger"
+  gem.name          = "sour"
 
-  gem.authors       = ["Josep M. Pujol", "Jakub Hozak"]
-  gem.email         = 'josep@3scale.net'
+  gem.authors       = ["Jakub Hozak"]
+  gem.email         = 'jakub@3scale.net'
 
   gem.description   = %q{Tool for converting comments to Swagger JSON specification}
   gem.summary       = %q{Builds a swagger compliant JSON specification from annotations on the comments of your source code.}
 
-  gem.homepage      = ""
+  gem.homepage      = "https://github.com/HakubJozak/sour.git"
 
   gem.files         = `git ls-files`.split($\)
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }

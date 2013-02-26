@@ -37,10 +37,10 @@ module Sour
     end
 
 
-    def GET( desc = nil, &block) ; operation('GET', desc, &block) ; end
-    def POST( desc = nil, &block) ; operation('POST', desc, &block) ; end
-    def PUT( desc = nil, &block) ; operation('PUT', desc, &block) ; end
-    def DELETE( desc = nil, &block) ; operation('DELETE', desc, &block) ; end
+    def GET(desc = nil, &block) ; operation('GET', desc, &block) ; end
+    def POST(desc = nil, &block) ; operation('POST', desc, &block) ; end
+    def PUT(desc = nil, &block) ; operation('PUT', desc, &block) ; end
+    def DELETE(desc = nil, &block) ; operation('DELETE', desc, &block) ; end
 
   end
 
@@ -53,9 +53,10 @@ module Sour
   class Operation < Hash
     extend MixinBuilder
 
-    def initialize(method, description, &definition)
+    def initialize(method, summary, &definition)
       self[:httpMethod] = method
-      self[:description] = description
+      self[:summary] = summary
+      self[:description] = summary
       @params = self[:parameters] = []
       self.instance_eval(&definition)
     end
@@ -103,8 +104,7 @@ module Sour
 
     def parse_documentation(docs, &block)
       raise 'Already parsing some documentation' if @parsing
-      raise 'Pass either string or block to parse' if docs && block_given?
-
+      raise 'Pass either string to parse or block to evaluation' if docs && block_given?
 
       @parsing = true
       if docs

@@ -3,6 +3,7 @@
 require 'rubygems'
 require 'thor'
 require 'json'
+require 'pry'
 
 begin
   require 'sour/dsl'
@@ -20,5 +21,5 @@ end
 
 
 
-args_with_task = [ :docs, ARGV ].flatten
+args_with_task = [ 'docs', ARGV ].flatten
 Sour::CLI.start(args_with_task)
