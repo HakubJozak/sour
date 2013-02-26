@@ -1,16 +1,14 @@
 PATH
   remote: .
   specs:
-    source2swagger (0.1.0)
-      thor
+    sour (0.1.0)
 
 GEM
   remote: http://rubygems.org/
   specs:
-    thor (0.16.0)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
-  source2swagger!
+  sour!
