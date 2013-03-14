@@ -6,12 +6,16 @@ module Sour
     # }
     #
     def mixin(*args, &block)
-      if block_given?
-        instance_eval """
-        def self.#{name}
+      if block
+        file, line = caller.first.split(':', 2)
+        line = line.to_io
+
+        name = args.shift
+        instance_eval(<<-EOS, file, line - 2)
+        def self.#{name.to_s}
             block.call
         end
-        """
+        EOS
        else
         include args.first
        end
@@ -36,12 +40,25 @@ module Sour
       @operations << Operation.new(method, description, &definition)
     end
 
-
     def GET(desc = nil, &block) ; operation('GET', desc, &block) ; end
     def POST(desc = nil, &block) ; operation('POST', desc, &block) ; end
     def PUT(desc = nil, &block) ; operation('PUT', desc, &block) ; end
     def DELETE(desc = nil, &block) ; operation('DELETE', desc, &block) ; end
 
+  end
+
+  class Param < Hash
+    def initialize(opts)
+      opts.each_pair do |key,value|
+        if key == :choices
+          raise 'Values of "choices" has to be an array' unless value.is_a?(Array)
+          self[:required] ||= false
+          self[:allowableValues] = { valueType:"LIST", values: value.dup }
+        else
+          self[key] = value
+        end
+      end
+    end
   end
 
 
@@ -86,7 +103,7 @@ module Sour
         end
       end
 
-      @params <<  opts.merge(args.shift || {})
+      @params << Param.new(opts.merge(args.shift || {}))
     end
 
     def id(desc)

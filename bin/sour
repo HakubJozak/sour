@@ -1,6 +1,7 @@
-#! /usr/bin/env ruby
+#!/usr/bin/env ruby
+# -*- mode: ruby -*-
 
-require 'rubygems'
+# require 'rubygems'
 require 'thor'
 require 'json'
 require 'pry'
