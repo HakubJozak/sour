@@ -12,5 +12,5 @@ Gem::Specification.new do |s|
   s.extra_rdoc_files = ['README.md']
   s.test_files    = s.files.grep(%r{^(test|spec|features)/})
   s.require_paths = ["lib"]
-  s.version       = '0.1.0'
+  s.version       = '0.1.1'
 end
