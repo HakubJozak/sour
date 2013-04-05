@@ -93,7 +93,7 @@ module Sour
     # param { attributes }
     #
     def param(*args)
-      opts = {}
+      opts = { paramType: default_param_type }
 
       if args.first.is_a?(String)
         opts[:name] = args.shift
@@ -107,7 +107,17 @@ module Sour
     end
 
     def id(desc)
-      param(name: 'id', description: desc,  required: true, paramType: 'int')
+      param(name: 'id', description: desc, required: true, dataType: 'int', paramType: 'path')
+    end
+
+    private
+
+    def default_param_type
+      if self[:httpMethod] == 'GET'
+        'path'
+      else
+        'query'
+      end
     end
   end
 
