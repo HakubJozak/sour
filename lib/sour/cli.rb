@@ -5,33 +5,34 @@ module Sour
 
     default_task :docs
 
-    desc "docs PATH", "generate documentation from the processing a file/directory supplied"
+    desc "docs PATH", "generate documentation from a file,directory or standard input"
     method_option :comment, :default => '##~', :desc => 'comment prefix', :aliases => '-c'
-    def docs(glob)
-      files = Dir[glob]
+    def docs(*args)
+      files = case args.size
+              when 1 then Dir[args.first]
+              when 0 then [ STDIN ]
+              else args
+              end
+
+      whisper("#{args.inspect} does not exist") and return if files.empty?
 
       buffer = []
       comment = options[:comment]
 
-      if files.size > 0
-        files.each do |file|
-          if File.exist?(file)
-            whisper "Reading #{file}"
+      files.each do |file|
+        if File.exist?(file)
+          whisper "Reading #{file}"
 
-            File.new(file).lines.each do |line|
-              stripped = line.strip
+          File.new(file).lines.each do |line|
+            stripped = line.strip
 
-              if stripped.start_with?(comment)
-                buffer << stripped[comment.size..-1]
-              end
+            if stripped.start_with?(comment)
+              buffer << stripped[comment.size..-1]
             end
-          else
-            whisper "#{file} does not exist"
           end
+        else
+          whisper "#{file} does not exist"
         end
-      else
-        say "No such file or directory: #{glob}"
-        return
       end
 
       builder = Sour::Builder.new
